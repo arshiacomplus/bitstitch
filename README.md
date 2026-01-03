@@ -18,10 +18,8 @@ When a download fails, the last few megabytes are often corrupted with junk data
 
 ## ✨ Key Features
 - **Android 13+ Support:** Uses `MANAGE_EXTERNAL_STORAGE` and `MethodChannel` for system-level file access and media scanning.
-- **Ultra Lightweight:** Release builds optimized down to ~15MB.
 - **GitHub Integration:** Automate complex "Cut & Stitch" operations using your own GitHub PAT.
 - **Multi-Platform:** One codebase running on Android (V8a, V7a), Windows (x64), and Linux (x64).
-- **Offline Friendly:** Built with specialized Gradle configurations to run on environments with limited connectivity.
 
 ## 🛠 Installation
 
