@@ -1,0 +1,37 @@
+
+name: BitStitch_Cutter
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'File URL'
+        required: true
+      start_byte:
+        description: 'Byte Offset'
+        required: true
+      filename:
+        description: 'Filename'
+        required: true
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and Cut
+        run: |
+          curl -f -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+               "${{ github.event.inputs.url }}" -o full.tmp
+          
+          filesize=$(stat -c%s "full.tmp")
+          if [ $filesize -lt 10000 ]; then
+            echo "Error: Downloaded file is too small ($filesize bytes). Check the URL or server block."
+            cat full_file.tmp 
+            exit 1
+          fi
+          tail -c +$(( ${{ github.event.inputs.start_byte }} + 1 )) full.tmp > "${{ github.event.inputs.filename }}"
+          
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixed-part
+          path: ${{ github.event.inputs.filename }}
