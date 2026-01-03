@@ -43,36 +43,37 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: { channel: 'stable' }
+      - name: Repair Windows Platform
+        run: flutter create --platforms=windows .
       - name: Build Windows
         run: flutter build windows --release
+      - name: Archive Windows Release
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath bitstitch-windows-x64.zip
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: build/windows/x64/runner/Release/*
+          path: bitstitch-windows-x64.zip
   linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: { channel: 'stable' }
-
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --fix-missing clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
-
       - name: Repair Linux Platform
         run: flutter create --platforms=linux .
-
       - name: Build Linux
         run: flutter build linux --release
-
       - name: Create Linux Zip
         run: |
           cd build/linux/x64/release/bundle
           zip -r ../../../../bitstitch-linux-x64.zip . *
-
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
