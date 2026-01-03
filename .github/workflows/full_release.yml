@@ -1,10 +1,16 @@
 name: BitStitch Multi-Platform Release
-
 on:
   push:
     tags:
       - 'v*'
-
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version Name (e.g. v1.0.5)'
+        required: true
+        default: 'v1.0.0'
+permissions:
+  contents: write
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -14,11 +20,9 @@ jobs:
         with: { java-version: '17', distribution: 'temurin' }
       - uses: subosito/flutter-action@v2
         with: { channel: 'stable' }
-
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-
       - name: Build APKs (Universal & Splits)
         env:
           KEYSTORE_PATH: "upload-keystore.jks"
@@ -28,13 +32,11 @@ jobs:
         run: |
           flutter build apk --release --split-per-abi
           flutter build apk --release
-
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-builds
           path: build/app/outputs/flutter-apk/*.apk
-
   windows:
     runs-on: windows-latest
     steps:
@@ -48,7 +50,6 @@ jobs:
         with:
           name: windows-build
           path: build/windows/x64/runner/Release/*
-
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -59,21 +60,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --fix-missing clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
-     
       - name: Build Linux
         run: flutter build linux --release
-      - name: Create DEB Package
+      - name: Create Linux Zip
         run: |
-          mkdir -p debian/usr/bin
-          cp build/linux/x64/release/bundle/bitstitch debian/usr/bin/
-          zip -r bitstitch-linux.zip build/linux/x64/release/bundle/*
-
+          cd build/linux/x64/release/bundle
+          zip -r ../../../../bitstitch-linux-x64.zip . *
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: bitstitch-linux.zip
-
+          path: bitstitch-linux-x64.zip
   release:
     needs: [android, windows, linux]
     runs-on: ubuntu-latest
@@ -83,6 +80,10 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: Release ${{ github.event.inputs.version || github.ref_name }}
+          draft: false
+          prerelease: false
           files: |
             android-builds/*.apk
             windows-build/*
